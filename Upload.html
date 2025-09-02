@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Upload to Blob Storage</title>
+  <title>Upload to Blob</title>
 </head>
 <body>
   <h3>Upload File to Azure Blob</h3>
@@ -14,6 +14,7 @@
     async function uploadFile() {
       const fileInput = document.getElementById("fileInput");
       const status = document.getElementById("status");
+
       if (!fileInput.files.length) {
         status.innerText = "Please select a file.";
         return;
@@ -21,16 +22,20 @@
 
       const file = fileInput.files[0];
 
-      // Your container SAS URL
-      const sasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?<YOUR_SAS_TOKEN>";
-      const blobUrl = `${sasUrl}&comp=block&blockid=${btoa(file.name)}`;
+      // ⚠️ Replace with your container SAS URL
+      const sasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?sp=rcw&st=2025-09-02T15:30:45Z&se=2025-09-02T23:45:45Z&spr=https&sv=2024-11-04&sr=c&sig=YOUR_SIG";
+
+      // Build full blob upload URL (container base + filename + SAS query)
+      const baseUrl = sasUrl.split("?")[0];
+      const sasToken = sasUrl.split("?")[1];
+      const blobUrl = `${baseUrl}/${encodeURIComponent(file.name)}?${sasToken}`;
 
       try {
-        const uploadUrl = sasUrl.split("?")[0] + "/" + encodeURIComponent(file.name) + "?" + sasUrl.split("?")[1];
-
-        const response = await fetch(uploadUrl, {
+        const response = await fetch(blobUrl, {
           method: "PUT",
-          headers: { "x-ms-blob-type": "BlockBlob" },
+          headers: {
+            "x-ms-blob-type": "BlockBlob"
+          },
           body: file
         });
 
@@ -38,7 +43,7 @@
           status.innerText = `✅ Uploaded successfully: ${file.name}`;
         } else {
           const text = await response.text();
-          status.innerText = `❌ Upload failed: ${response.status} ${text}`;
+          status.innerText = `❌ Upload failed: ${response.status} - ${text}`;
         }
       } catch (err) {
         status.innerText = "❌ Error: " + err.message;
@@ -47,4 +52,3 @@
   </script>
 </body>
 </html>
-
