@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload to Azure</title>
+</head>
+<body>
+  <h2>Upload your file</h2>
+  <input type="file" id="fileUpload" />
+  <button onclick="uploadFile()">Upload</button>
+
+  <p id="status"></p>
+
+  <script>
+    async function uploadFile() {
+      const file = document.getElementById('fileUpload').files[0];
+      if (!file) return alert("Select a file first");
+
+      // Replace with your storage container SAS URL
+      const sasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?sp=r&st=2025-09-02T15:00:46Z&se=2025-09-02T23:15:46Z&spr=https&sv=2024-11-04&sr=c&sig=Hy6B2lZvnQ7x4iDjiqmRl9nllYCiQrkF7dQlFAttj5A%3D";
+
+      document.getElementById("status").innerText = "Uploading...";
+
+      await fetch(sasUrl, {
+        method: "PUT",
+        headers: { "x-ms-blob-type": "BlockBlob" },
+        body: file
+      });
+
+      document.getElementById("status").innerText = "✅ File uploaded successfully!";
+    }
+  </script>
+</body>
+</html>
