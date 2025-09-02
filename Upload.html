@@ -1,41 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Azure Blob Upload</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/azure-storage-blob/12.10.0/azure-storage-blob.min.js"></script>
+  <meta charset="utf-8">
+  <title>Upload to Azure Blob</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/azure-storage-blob/12.8.0/azure-storage-blob.min.js"></script>
 </head>
 <body>
-  <h2>Upload to Azure Blob Storage</h2>
-  <input type="file" id="fileUpload" />
+  <h2>Upload File to Azure Blob Storage</h2>
+  <input type="file" id="fileInput" />
   <button onclick="uploadFile()">Upload</button>
+
   <p id="status"></p>
 
   <script>
     async function uploadFile() {
-      const file = document.getElementById("fileUpload").files[0];
-      if (!file) {
-        alert("Select a file first");
+      const fileInput = document.getElementById("fileInput");
+      const status = document.getElementById("status");
+
+      if (!fileInput.files.length) {
+        status.innerText = "Please select a file first.";
         return;
       }
 
-      // 👇 Replace with your SAS URL
-      const containerSasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?sp=rcw&st=2025-09-02T15:30:45Z&se=2025-09-02T23:45:45Z&spr=https&sv=2024-11-04&sr=c&sig=nZF1%2BlUJ5GSUf6mL1f7BY87oYaPNyb%2BlBsavQL8k3Mc%3D";
+      const file = fileInput.files[0];
 
       try {
-        const { BlobServiceClient } = window.azureStorageBlob;
-        const blobServiceClient = new BlobServiceClient(containerSasUrl);
+        // ✅ Replace this with your SAS URL
+        const sasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?<your-sas-token>";
 
-        const containerClient = blobServiceClient.getContainerClient();
+        // Create BlobServiceClient
+        const { BlobServiceClient } = window.azureStorageBlob;
+        const blobServiceClient = new BlobServiceClient(sasUrl);
+
+        // Container name must match the one in your SAS
+        const containerClient = blobServiceClient.getContainerClient("file-upload");
+
+        // Blob (file) name = original filename
         const blockBlobClient = containerClient.getBlockBlobClient(file.name);
 
-        document.getElementById("status").innerText = "⏳ Uploading...";
-
+        status.innerText = "Uploading...";
         await blockBlobClient.uploadBrowserData(file);
-
-        document.getElementById("status").innerText = "✅ Uploaded successfully!";
+        status.innerText = "✅ Upload complete: " + file.name;
       } catch (err) {
-        document.getElementById("status").innerText = "❌ Error: " + err.message;
         console.error(err);
+        status.innerText = "❌ Upload failed: " + err.message;
       }
     }
   </script>
