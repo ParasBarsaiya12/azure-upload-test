@@ -1,32 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Upload to Azure</title>
+  <title>Azure Blob Upload</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/azure-storage-blob/12.10.0/azure-storage-blob.min.js"></script>
 </head>
 <body>
-  <h2>Upload your file</h2>
+  <h2>Upload to Azure Blob Storage</h2>
   <input type="file" id="fileUpload" />
   <button onclick="uploadFile()">Upload</button>
-
   <p id="status"></p>
 
   <script>
     async function uploadFile() {
-      const file = document.getElementById('fileUpload').files[0];
-      if (!file) return alert("Select a file first");
+      const file = document.getElementById("fileUpload").files[0];
+      if (!file) {
+        alert("Select a file first");
+        return;
+      }
 
-      // Replace with your storage container SAS URL
-      const sasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?sp=r&st=2025-09-02T15:00:46Z&se=2025-09-02T23:15:46Z&spr=https&sv=2024-11-04&sr=c&sig=Hy6B2lZvnQ7x4iDjiqmRl9nllYCiQrkF7dQlFAttj5A%3D";
+      // 👇 Replace with your SAS URL
+      const containerSasUrl = "https://stgacctflowaidev.blob.core.windows.net/file-upload?sp=rcw&st=2025-09-02T15:30:45Z&se=2025-09-02T23:45:45Z&spr=https&sv=2024-11-04&sr=c&sig=nZF1%2BlUJ5GSUf6mL1f7BY87oYaPNyb%2BlBsavQL8k3Mc%3D";
 
-      document.getElementById("status").innerText = "Uploading...";
+      try {
+        const { BlobServiceClient } = window.azureStorageBlob;
+        const blobServiceClient = new BlobServiceClient(containerSasUrl);
 
-      await fetch(sasUrl, {
-        method: "PUT",
-        headers: { "x-ms-blob-type": "BlockBlob" },
-        body: file
-      });
+        const containerClient = blobServiceClient.getContainerClient();
+        const blockBlobClient = containerClient.getBlockBlobClient(file.name);
 
-      document.getElementById("status").innerText = "✅ File uploaded successfully!";
+        document.getElementById("status").innerText = "⏳ Uploading...";
+
+        await blockBlobClient.uploadBrowserData(file);
+
+        document.getElementById("status").innerText = "✅ Uploaded successfully!";
+      } catch (err) {
+        document.getElementById("status").innerText = "❌ Error: " + err.message;
+        console.error(err);
+      }
     }
   </script>
 </body>
